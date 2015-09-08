@@ -35,7 +35,11 @@ var ApplicationRunner = (function () {
 	_createClass(ApplicationRunner, [{
 		key: 'startBiddingIn',
 		value: function startBiddingIn(auction) {
-			this.messageBroker = childProcess.exec('node messageBroker.js ' + XMPP_HOSTNAME + ' ' + SNIPER_ID + ' ' + SNIPER_PASSWORD + ' ' + auction.getItemId(), function () {});
+			console.log(childProcess.exec);
+			this.messageBroker = childProcess.exec('node messageBroker.js ' + XMPP_HOSTNAME + ' ' + SNIPER_ID + ' ' + SNIPER_PASSWORD + ' ' + auction.getItemId(), function (stderr) {
+				console.log('things that make you go boom: ' + stderr);
+			});
+			console.log('yo ' + this.messageBroker);
 			this.driver = new AuctionSniperDriver(1000);
 			this.driver.showsSniperStatus(STATUS_JOINING);
 		}
@@ -47,6 +51,7 @@ var ApplicationRunner = (function () {
 	}, {
 		key: 'stop',
 		value: function stop() {
+			console.log('yo1 ' + this.messageBroker);
 			this.messageBroker.exit();
 		}
 	}]);
@@ -57,14 +62,13 @@ var ApplicationRunner = (function () {
 describe('the auction sniper', function () {
 	var auction;
 	var application;
-	console.log(sniperId);
-	before("tgfbtgbtg", function () {
+	before('auction sniper e2e', function () {
 		application = new ApplicationRunner();
-		auction = new FakeAuctionServer('item-5347');
+		// auction = new FakeAuctionServer('item-5347');		
 	});
 
 	it('joins an auction untill it closes', function () {
-		auction.startSellingItem();
+		// auction.startSellingItem();
 		application.startBiddingIn(auction);
 		auction.hasRecievedJoinRequestFromSniper();
 		auction.announceClosed();

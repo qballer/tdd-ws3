@@ -17,7 +17,9 @@ class ApplicationRunner {
 	}
 	startBiddingIn(auction) {
 		this.messageBroker = childProcess.exec('node messageBroker.js ' + XMPP_HOSTNAME + ' ' + SNIPER_ID + ' ' + SNIPER_PASSWORD + 
-			' ' + auction.getItemId(), function (){});
+			' ' + auction.getItemId(), function (stderr){
+				console.log('things that make you go boom: ' + stderr);
+			});
 		this.driver = new AuctionSniperDriver(1000); 
 		this.driver.showsSniperStatus(STATUS_JOINING); 
 	}
@@ -32,8 +34,7 @@ class ApplicationRunner {
 describe('the auction sniper', () =>{
 	var auction;
 	var application;
-	console.log(sniperId);
-	before("tgfbtgbtg",() => {
+	before('auction sniper e2e',() => {
 		application = new ApplicationRunner();
 		auction = new FakeAuctionServer('item-5347');		
 	});
