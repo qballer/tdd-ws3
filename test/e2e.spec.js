@@ -1,33 +1,60 @@
+require('source-map-support').install();
+var Promise = require('promise');
+import redis from 'then-redis';
+import theRealThing from '../src/main';
+
 var childProcess = require('child_process');
 const SNIPER_ID = 'sniper';
-const SNIPER_PASSWORD = 'sniper';
-const XMPP_HOSTNAME = 'localhost';
+const REDIS_HOSTNAME = 'localhost';
 const STATUS = 'STATUS';
 
+var statuses = {
+	STATUS_JOINING: 'STATUS_JOINING',
+	STATUS_LOST: 'STATUS_LOST'
+}
 
 class AuctionSniperDriver{
 	showsSniperStatus(statusText) {
-		return webDriver.hasDivCalled(STATUS).hasText(statusText);
+		return new Promise((result, err) => {err('not implemented');});
+		// webDriver.hasDivCalled(STATUS).hasText(statusText);
 	}
 }
 
 class ApplicationRunner {
 	constructor() {
-		this.driver = null;
+		this.driver = new AuctionSniperDriver(1000);
 	}
 	startBiddingIn(auction) {
-		this.messageBroker = childProcess.exec('node messageBroker.js ' + XMPP_HOSTNAME + ' ' + SNIPER_ID + ' ' + SNIPER_PASSWORD + 
-			' ' + auction.getItemId(), function (stderr){
-				console.log('things that make you go boom: ' + stderr);
-			});
-		this.driver = new AuctionSniperDriver(1000); 
-		this.driver.showsSniperStatus(STATUS_JOINING); 
+		// todo: start main program with some arguments
+		theRealThing.main();
+		return this.driver.showsSniperStatus(statuses.STATUS_JOINING); 
 	}
 	showsSniperHasLostAuction () {
-		this.driver.showsSniperStatus(STATUS_LOST); 
+		return this.driver.showsSniperStatus(statuses.STATUS_LOST); 
 	}
 	stop(){
-		this.messageBroker.exit();
+		// stop application
+		console.log('Hello');
+	}
+	showSniperHasLostAuction(){
+
+	}
+}
+
+
+class FakeAuctionServer {
+	constructor(itemId) {
+		this.itemId = itemId;
+	}
+	hasRecievedJoinRequestFromSniper(){
+		throw new Error("join request was not received");
+	}
+	announceClosed(){
+		return redis.createClient().publish(this.itemId, "done");
+	}
+	startSellingItem() {
+		this.redisListener = redis.createClient();
+		return this.redisListener.subscribe(this.itemId);
 	}
 }
 
@@ -35,19 +62,19 @@ describe('the auction sniper', () =>{
 	var auction;
 	var application;
 	before('auction sniper e2e',() => {
-		application = new ApplicationRunner();
 		auction = new FakeAuctionServer('item-5347');		
+		application = new ApplicationRunner();
 	});
 
 	it('joins an auction untill it closes', () => {
-		auction.startSellingItem();
-		application.startBiddingIn(auction);
-		auction.hasRecievedJoinRequestFromSniper();
-		auction.announceClosed();
-		application.showSniperHasLostAuction();
+		return auction.startSellingItem()
+			.then(() => application.startBiddingIn('item-5347'))
+			.then(() => auction.hasRecievedJoinRequestFromSniper())
+			.then(() => auction.announceClosed())
+			.then(() => application.showSniperHasLostAuction());
 	});	
+	
 	after('something', () => {
 		application.stop();
-		auction.stop();
 	});
 });

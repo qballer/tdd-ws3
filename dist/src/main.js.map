@@ -1,0 +1,1 @@
+{"version":3,"sources":["main.js"],"names":[],"mappings":";;AAEA,MAAM,CAAC,OAAO,GAAG;AAChB,KAAI,EAAG,gBAAU;AAChB,SAAO,CAAC,GAAG,CAAC,cAAc,CAAC,CAAC;EAC5B;CACD,CAAA","file":"main.js","sourcesContent":["\n\nmodule.exports = {\n\tmain : function(){\n\t\tconsole.log('yo oyooooooy');\n\t}\n}"],"sourceRoot":"/source/"}
