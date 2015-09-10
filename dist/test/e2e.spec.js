@@ -24,8 +24,9 @@ var webdriverio = require('webdriverio');
 var options = { desiredCapabilities: { browserName: 'phantomjs' } };
 
 var statuses = {
-	STATUS_JOINING: 'joining',
-	STATUS_LOST: 'lost'
+	JOINING: 'joining',
+	BIDDING: 'bidding',
+	LOST: 'lost'
 };
 var client;
 
@@ -70,12 +71,17 @@ var ApplicationRunner = (function () {
 				console.log(stdout);
 				console.log(error);
 			});
-			return this.driver.showsSniperStatus(statuses.STATUS_JOINING);
+			return this.driver.showsSniperStatus(statuses.JOINING);
 		}
 	}, {
 		key: 'showsSniperHasLostAuction',
 		value: function showsSniperHasLostAuction() {
-			return this.driver.showsSniperStatus(statuses.STATUS_LOST);
+			return this.driver.showsSniperStatus(statuses.LOST);
+		}
+	}, {
+		key: 'hasShownSniperIsBidding',
+		value: function hasShownSniperIsBidding() {
+			return this.driver.showsSniperStatus(statuses.BIDDING);
 		}
 	}, {
 		key: 'stop',

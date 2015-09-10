@@ -13,8 +13,9 @@ var webdriverio = require('webdriverio');
 var options = { desiredCapabilities: { browserName: 'phantomjs' } };
 
 var statuses = {
-	STATUS_JOINING: 'joining',
-	STATUS_LOST: 'lost'
+	JOINING: 'joining',
+	BIDDING: 'bidding',
+	LOST: 'lost'
 };
 var client;
 class AuctionSniperDriver{
@@ -42,10 +43,13 @@ class ApplicationRunner {
 			console.log(stdout);
 			console.log(error);
 		});
-		return this.driver.showsSniperStatus(statuses.STATUS_JOINING); 
+		return this.driver.showsSniperStatus(statuses.JOINING);
 	}
 	showsSniperHasLostAuction () {
-		return this.driver.showsSniperStatus(statuses.STATUS_LOST); 
+		return this.driver.showsSniperStatus(statuses.LOST);
+	}
+	hasShownSniperIsBidding() {
+		return this.driver.showsSniperStatus(statuses.BIDDING);
 	}
 	stop(){
 		 this.runningServer.kill('SIGINT');
