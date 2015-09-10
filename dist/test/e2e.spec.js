@@ -10,35 +10,53 @@ var _thenRedis = require('then-redis');
 
 var _thenRedis2 = _interopRequireDefault(_thenRedis);
 
-var _srcMain = require('../src/main');
-
-var _srcMain2 = _interopRequireDefault(_srcMain);
+// import theRealThing from '../src/main';
 
 require('source-map-support').install();
-var Promise = require('promise');
-
+var Promise = require('bluebird');
+var assert = require('chai').assert;
 var childProcess = require('child_process');
 var SNIPER_ID = 'sniper';
 var REDIS_HOSTNAME = 'localhost';
 var STATUS = 'STATUS';
 
+var webdriverio = require('webdriverio');
+var options = { desiredCapabilities: { browserName: 'chrome' } };
+
 var statuses = {
-	STATUS_JOINING: 'STATUS_JOINING',
-	STATUS_LOST: 'STATUS_LOST'
+	STATUS_JOINING: 'joining',
+	STATUS_LOST: 'lost'
 };
+var client;
 
 var AuctionSniperDriver = (function () {
+	// todo connect with browser to localhost http server, assert that html response shows expected status
+
 	function AuctionSniperDriver() {
 		_classCallCheck(this, AuctionSniperDriver);
+
+		client = webdriverio.remote(options).init();
+		this.first = true;
 	}
 
 	_createClass(AuctionSniperDriver, [{
 		key: 'showsSniperStatus',
 		value: function showsSniperStatus(statusText) {
-			return new Promise(function (result, err) {
-				err('not implemented');
+			if (this.first) {
+				//	client = client.init();
+				this.first = false;
+			}
+			return client.url('localhost:8888').then(function () {
+				return client.getText('#status');
+			}).then(function (text) {
+				assert.equal(text, statusText, 'wrong status');
+				console.log('Assert Passed!!');
 			});
-			// webDriver.hasDivCalled(STATUS).hasText(statusText);
+		}
+	}, {
+		key: 'stop',
+		value: function stop() {
+			client.end();
 		}
 	}]);
 
@@ -50,13 +68,17 @@ var ApplicationRunner = (function () {
 		_classCallCheck(this, ApplicationRunner);
 
 		this.driver = new AuctionSniperDriver(1000);
+		this.driver.showsSniperStatus(statuses.STATUS_JOINING);
 	}
 
 	_createClass(ApplicationRunner, [{
 		key: 'startBiddingIn',
 		value: function startBiddingIn(auction) {
-			// todo: start main program with some arguments
-			_srcMain2['default'].main();
+			// start main program with some arguments
+			this.runningServer = childProcess.exec('node ./src/main.js ' + auction, function (error, stdout) {
+				console.log(stdout);
+				console.log(error);
+			});
 			return this.driver.showsSniperStatus(statuses.STATUS_JOINING);
 		}
 	}, {
@@ -67,12 +89,9 @@ var ApplicationRunner = (function () {
 	}, {
 		key: 'stop',
 		value: function stop() {
-			// stop application
-			console.log('Hello');
+			this.runningServer.kill('SIGINT');
+			this.driver.stop();
 		}
-	}, {
-		key: 'showSniperHasLostAuction',
-		value: function showSniperHasLostAuction() {}
 	}]);
 
 	return ApplicationRunner;
@@ -80,15 +99,26 @@ var ApplicationRunner = (function () {
 
 var FakeAuctionServer = (function () {
 	function FakeAuctionServer(itemId) {
+		var _this = this;
+
 		_classCallCheck(this, FakeAuctionServer);
 
+		this.count = 0;
 		this.itemId = itemId;
+		this.redisListener = _thenRedis2['default'].createClient();
+		this.redisListener.on('message', function (channel, msg) {
+			_this.count += 1;
+			_this.message = msg;
+		});
 	}
 
 	_createClass(FakeAuctionServer, [{
 		key: 'hasRecievedJoinRequestFromSniper',
 		value: function hasRecievedJoinRequestFromSniper() {
-			throw new Error("join request was not received");
+			assert(this.count > 0, 'did not receive a message');
+			return new Promise(function (res, rej) {
+				res();
+			});
 		}
 	}, {
 		key: 'announceClosed',
@@ -98,7 +128,6 @@ var FakeAuctionServer = (function () {
 	}, {
 		key: 'startSellingItem',
 		value: function startSellingItem() {
-			this.redisListener = _thenRedis2['default'].createClient();
 			return this.redisListener.subscribe(this.itemId);
 		}
 	}]);
@@ -109,7 +138,7 @@ var FakeAuctionServer = (function () {
 describe('the auction sniper', function () {
 	var auction;
 	var application;
-	before('auction sniper e2e', function () {
+	beforeEach('auction sniper e2e', function () {
 		auction = new FakeAuctionServer('item-5347');
 		application = new ApplicationRunner();
 	});
@@ -122,11 +151,11 @@ describe('the auction sniper', function () {
 		}).then(function () {
 			return auction.announceClosed();
 		}).then(function () {
-			return application.showSniperHasLostAuction();
+			return application.showsSniperHasLostAuction();
 		});
 	});
 
-	after('something', function () {
+	afterEach('something', function () {
 		application.stop();
 	});
 });

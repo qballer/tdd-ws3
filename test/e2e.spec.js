@@ -1,59 +1,88 @@
 require('source-map-support').install();
-var Promise = require('promise');
+var Promise = require('bluebird');
+var assert = require('chai').assert;
 import redis from 'then-redis';
-import theRealThing from '../src/main';
+// import theRealThing from '../src/main';
 
 var childProcess = require('child_process');
 const SNIPER_ID = 'sniper';
 const REDIS_HOSTNAME = 'localhost';
 const STATUS = 'STATUS';
 
-var statuses = {
-	STATUS_JOINING: 'STATUS_JOINING',
-	STATUS_LOST: 'STATUS_LOST'
-}
+var webdriverio = require('webdriverio');
+var options = { desiredCapabilities: { browserName: 'chrome' } };
 
+var statuses = {
+	STATUS_JOINING: 'joining',
+	STATUS_LOST: 'lost'
+}
+var client;
 class AuctionSniperDriver{
+	// todo connect with browser to localhost http server, assert that html response shows expected status
+	constructor(){
+		client = webdriverio.remote(options).init();
+		this.first = true;
+	}
 	showsSniperStatus(statusText) {
-		return new Promise((result, err) => {err('not implemented');});
-		// webDriver.hasDivCalled(STATUS).hasText(statusText);
+		if (this.first){
+		//	client = client.init();
+			this.first = false;
+		}
+		return client.url('localhost:8888')
+		.then( () => client.getText('#status'))
+		.then(text => {
+			assert.equal(text, statusText, 'wrong status');
+			console.log('Assert Passed!!');
+		});
+	}
+	stop(){
+		client.end();
 	}
 }
 
 class ApplicationRunner {
 	constructor() {
 		this.driver = new AuctionSniperDriver(1000);
+        this.driver.showsSniperStatus(statuses.STATUS_JOINING); 
 	}
 	startBiddingIn(auction) {
-		// todo: start main program with some arguments
-		theRealThing.main();
+		// start main program with some arguments
+		this.runningServer = childProcess.exec('node ./src/main.js ' + auction, (error,stdout) => {
+			console.log(stdout);
+			console.log(error);
+		});
 		return this.driver.showsSniperStatus(statuses.STATUS_JOINING); 
 	}
 	showsSniperHasLostAuction () {
 		return this.driver.showsSniperStatus(statuses.STATUS_LOST); 
 	}
 	stop(){
-		// stop application
-		console.log('Hello');
+		 this.runningServer.kill('SIGINT');
+         this.driver.stop();
 	}
-	showSniperHasLostAuction(){
-
-	}
+	
 }
-
 
 class FakeAuctionServer {
 	constructor(itemId) {
+		this.count = 0;
 		this.itemId = itemId;
+		this.redisListener = redis.createClient();
+		this.redisListener.on('message', (channel, msg) => {
+				this.count += 1;
+				this.message = msg;
+		})
 	}
 	hasRecievedJoinRequestFromSniper(){
-		throw new Error("join request was not received");
+        assert(this.count > 0, 'did not receive a message');
+		return new Promise((res, rej) =>{
+			res();
+		});
 	}
 	announceClosed(){
 		return redis.createClient().publish(this.itemId, "done");
 	}
 	startSellingItem() {
-		this.redisListener = redis.createClient();
 		return this.redisListener.subscribe(this.itemId);
 	}
 }
@@ -61,7 +90,7 @@ class FakeAuctionServer {
 describe('the auction sniper', () =>{
 	var auction;
 	var application;
-	before('auction sniper e2e',() => {
+	beforeEach('auction sniper e2e',() => {
 		auction = new FakeAuctionServer('item-5347');		
 		application = new ApplicationRunner();
 	});
@@ -71,10 +100,10 @@ describe('the auction sniper', () =>{
 			.then(() => application.startBiddingIn('item-5347'))
 			.then(() => auction.hasRecievedJoinRequestFromSniper())
 			.then(() => auction.announceClosed())
-			.then(() => application.showSniperHasLostAuction());
+			.then(() => application.showsSniperHasLostAuction());
 	});	
 	
-	after('something', () => {
+	afterEach('something', () => {
 		application.stop();
 	});
 });
