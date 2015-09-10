@@ -19,7 +19,7 @@ function main() {
 	});
 
 	app.get('/', function (req, res) {
-		res.send('<div id="status">' + state + '</div>');
+		res.send('<html><head></head><body>\n\t\t<div id="status">' + state + '</div>\n\t\t</body></html>');
 	});
 	server = app.listen(8888, function () {
 		var host = server.address().address;

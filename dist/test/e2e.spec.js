@@ -21,7 +21,7 @@ var REDIS_HOSTNAME = 'localhost';
 var STATUS = 'STATUS';
 
 var webdriverio = require('webdriverio');
-var options = { desiredCapabilities: { browserName: 'chrome' } };
+var options = { desiredCapabilities: { browserName: 'phantomjs' } };
 
 var statuses = {
 	STATUS_JOINING: 'joining',
@@ -30,8 +30,6 @@ var statuses = {
 var client;
 
 var AuctionSniperDriver = (function () {
-	// todo connect with browser to localhost http server, assert that html response shows expected status
-
 	function AuctionSniperDriver() {
 		_classCallCheck(this, AuctionSniperDriver);
 
@@ -41,7 +39,7 @@ var AuctionSniperDriver = (function () {
 	_createClass(AuctionSniperDriver, [{
 		key: 'showsSniperStatus',
 		value: function showsSniperStatus(statusText) {
-			return client.url('localhost:8888').then(function () {
+			return client.url('http://localhost:8888').then(function () {
 				return client.getText('#status');
 			}).then(function (text) {
 				assert.equal(text, statusText, 'wrong status');
@@ -98,8 +96,9 @@ var FakeAuctionServer = (function () {
 
 		this.count = 0;
 		this.itemId = itemId;
-		this.redisListener = _thenRedis2['default'].createClient();
-		this.redisListener.on('message', function (channel, msg) {
+		this.publisher = _thenRedis2['default'].createClient();
+		this.listener = _thenRedis2['default'].createClient();
+		this.listener.on('message', function (channel, msg) {
 			_this.count += 1;
 			_this.message = msg;
 		});
@@ -116,12 +115,18 @@ var FakeAuctionServer = (function () {
 	}, {
 		key: 'announceClosed',
 		value: function announceClosed() {
-			return _thenRedis2['default'].createClient().publish(this.itemId, "lost");
+			return this.publisher.publish(this.itemId, "lost");
 		}
 	}, {
 		key: 'startSellingItem',
 		value: function startSellingItem() {
-			return this.redisListener.subscribe(this.itemId);
+			return this.listener.subscribe(this.itemId);
+		}
+	}, {
+		key: 'stop',
+		value: function stop() {
+			this.listener.quit();
+			this.publisher.quit();
 		}
 	}]);
 
@@ -150,6 +155,7 @@ describe('the auction sniper', function () {
 
 	afterEach('something', function () {
 		application.stop();
+		auction.stop();
 	});
 });
 //# sourceMappingURL=e2e.spec.js.map

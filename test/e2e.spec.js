@@ -10,20 +10,19 @@ const REDIS_HOSTNAME = 'localhost';
 const STATUS = 'STATUS';
 
 var webdriverio = require('webdriverio');
-var options = { desiredCapabilities: { browserName: 'chrome' } };
+var options = { desiredCapabilities: { browserName: 'phantomjs' } };
 
 var statuses = {
 	STATUS_JOINING: 'joining',
 	STATUS_LOST: 'lost'
-}
+};
 var client;
 class AuctionSniperDriver{
-	// todo connect with browser to localhost http server, assert that html response shows expected status
 	constructor(){
 		client = webdriverio.remote(options).init();
 	}
 	showsSniperStatus(statusText) {
-		return client.url('localhost:8888')
+		return client.url('http://localhost:8888')
 		.then( () => client.getText('#status'))
 		.then(text => {
 			assert.equal(text, statusText, 'wrong status');
@@ -36,9 +35,6 @@ class AuctionSniperDriver{
 }
 
 class ApplicationRunner {
-	constructor() {
-
-	}
 	startBiddingIn(auction) {
 		this.driver = new AuctionSniperDriver(1000);
 		// start main program with some arguments
@@ -62,8 +58,9 @@ class FakeAuctionServer {
 	constructor(itemId) {
 		this.count = 0;
 		this.itemId = itemId;
-		this.redisListener = redis.createClient();
-		this.redisListener.on('message', (channel, msg) => {
+		this.publisher = redis.createClient();
+		this.listener = redis.createClient();
+		this.listener.on('message', (channel, msg) => {
 				this.count += 1;
 				this.message = msg;
 		})
@@ -75,10 +72,14 @@ class FakeAuctionServer {
 		});
 	}
 	announceClosed(){
-		return redis.createClient().publish(this.itemId, "lost");
+		return this.publisher.publish(this.itemId, "lost");
 	}
 	startSellingItem() {
-		return this.redisListener.subscribe(this.itemId);
+		return this.listener.subscribe(this.itemId);
+	}
+	stop(){
+		this.listener.quit();
+		this.publisher.quit();
 	}
 }
 
@@ -100,5 +101,6 @@ describe('the auction sniper', () =>{
 	
 	afterEach('something', () => {
 		application.stop();
+		auction.stop();
 	});
 });

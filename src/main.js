@@ -3,7 +3,7 @@ var sourcemaps = require("gulp-sourcemaps");
 var app = express();
 var server;
 var state = 'joining';
-var redis = require('then-redis')
+var redis = require('then-redis');
 var itemToSnipe = process.argv[2];
 
 function main(){
@@ -17,7 +17,9 @@ function main(){
 	});
 	
 	app.get('/', function (req, res) {
-		res.send('<div id="status">' + state + '</div>');
+		res.send(`<html><head></head><body>
+		<div id="status">${state}</div>
+		</body></html>`);
 	});
 	server = app.listen(8888, function () {
 		var host = server.address().address;
