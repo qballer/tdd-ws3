@@ -61,15 +61,28 @@ class FakeAuctionServer {
 		this.publisher = redis.createClient();
 		this.listener = redis.createClient();
 		this.listener.on('message', (channel, msg) => {
-				this.count += 1;
+				//this.count += 1;
 				this.message = msg;
 		})
 	}
-	hasReceivedJoinRequestFromSniper(){
-        assert(this.count > 0, 'did not receive a message');
+	hasReceivedJoinRequestFrom(bidder){
+		var messageBody = JSON.parse(this.message);
+		assert.equal(messageBody.type, 'join', 'bidder did not match');
+        assert.equal(messageBody.bidder, bidder, 'bidder did not match');
 		return new Promise((res) =>{
 			res();
 		});
+	}
+	hasReceivedBid(price, bidder) {
+		var messageBody = JSON.parse(this.message);
+		assert.equal(messageBody.type, 'bid', 'last message was not a bid');
+		assert.equal(messageBody.price, price, 'price did not match');
+		assert.equal(messageBody.bidder, bidder, 'bidder did not match');
+
+	}
+
+	reportPrice(price, increment, bidder){
+		return this.publisher.publish(this.itemId, JSON.stringify({price, increment, bidder, type: "price"}));
 	}
 	announceClosed(){
 		return this.publisher.publish(this.itemId, "closed");
@@ -94,7 +107,7 @@ describe('the auction sniper', () =>{
 	it('makes higher bid but loses', () => {
 		return auction.startSellingItem()
 			.then(() => application.startBiddingIn('item-5347'))
-			.then(() => auction.hasReceivedJoinRequestFromSniper())
+			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
 
 			.then(() => auction.reportPrice(1000, 98, 'other bidder'))
 			.then(() => application.hasShownSniperIsBidding())
@@ -107,7 +120,7 @@ describe('the auction sniper', () =>{
 	it('joins an auction untill it closes', () => {
 		return auction.startSellingItem()
 			.then(() => application.startBiddingIn('item-5347'))
-			.then(() => auction.hasReceivedJoinRequestFromSniper())
+			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
 			.then(() => auction.announceClosed())
 			.then(() => application.showsSniperHasLostAuction());
 	});	

@@ -99,18 +99,33 @@ var FakeAuctionServer = (function () {
 		this.publisher = _thenRedis2['default'].createClient();
 		this.listener = _thenRedis2['default'].createClient();
 		this.listener.on('message', function (channel, msg) {
-			_this.count += 1;
+			//this.count += 1;
 			_this.message = msg;
 		});
 	}
 
 	_createClass(FakeAuctionServer, [{
-		key: 'hasReceivedJoinRequestFromSniper',
-		value: function hasReceivedJoinRequestFromSniper() {
-			assert(this.count > 0, 'did not receive a message');
+		key: 'hasReceivedJoinRequestFrom',
+		value: function hasReceivedJoinRequestFrom(bidder) {
+			var messageBody = JSON.parse(this.message);
+			assert.equal(messageBody.type, 'join', 'bidder did not match');
+			assert.equal(messageBody.bidder, bidder, 'bidder did not match');
 			return new Promise(function (res) {
 				res();
 			});
+		}
+	}, {
+		key: 'hasReceivedBid',
+		value: function hasReceivedBid(price, bidder) {
+			var messageBody = JSON.parse(this.message);
+			assert.equal(messageBody.type, 'bid', 'last message was not a bid');
+			assert.equal(messageBody.price, price, 'price did not match');
+			assert.equal(messageBody.bidder, bidder, 'bidder did not match');
+		}
+	}, {
+		key: 'reportPrice',
+		value: function reportPrice(price, increment, bidder) {
+			return this.publisher.publish(this.itemId, JSON.stringify({ price: price, increment: increment, bidder: bidder, type: "price" }));
 		}
 	}, {
 		key: 'announceClosed',
@@ -145,7 +160,7 @@ describe('the auction sniper', function () {
 		return auction.startSellingItem().then(function () {
 			return application.startBiddingIn('item-5347');
 		}).then(function () {
-			return auction.hasReceivedJoinRequestFromSniper();
+			return auction.hasReceivedJoinRequestFrom(SNIPER_ID);
 		}).then(function () {
 			return auction.reportPrice(1000, 98, 'other bidder');
 		}).then(function () {
@@ -163,7 +178,7 @@ describe('the auction sniper', function () {
 		return auction.startSellingItem().then(function () {
 			return application.startBiddingIn('item-5347');
 		}).then(function () {
-			return auction.hasReceivedJoinRequestFromSniper();
+			return auction.hasReceivedJoinRequestFrom(SNIPER_ID);
 		}).then(function () {
 			return auction.announceClosed();
 		}).then(function () {

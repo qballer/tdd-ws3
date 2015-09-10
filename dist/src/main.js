@@ -7,15 +7,20 @@ var server;
 var state = 'joining';
 var redis = require('then-redis');
 var itemToSnipe = process.argv[2];
+var SNIPER_ID = 'sniper';
 
 function main() {
+	function joinAuction(sniperId) {
+		client.publish(itemToSnipe, JSON.stringify({ bidder: sniperId, type: 'join' }));
+	}
+
 	var client = redis.createClient();
-	client.publish(itemToSnipe, 'join');
+	joinAuction(SNIPER_ID);
 	var listener = redis.createClient();
 	listener.subscribe(itemToSnipe);
 
 	listener.on('message', function (channel, msg) {
-		state = msg;
+		state = 'lost';
 	});
 
 	app.get('/', function (req, res) {
