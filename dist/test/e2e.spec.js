@@ -35,17 +35,12 @@ var AuctionSniperDriver = (function () {
 	function AuctionSniperDriver() {
 		_classCallCheck(this, AuctionSniperDriver);
 
-		client = webdriverio.remote(options);
-		this.first = true;
+		client = webdriverio.remote(options).init();
 	}
 
 	_createClass(AuctionSniperDriver, [{
 		key: 'showsSniperStatus',
 		value: function showsSniperStatus(statusText) {
-			if (this.first) {
-				client = client.init();
-				this.first = false;
-			}
 			return client.url('localhost:8888').then(function () {
 				return client.getText('#status');
 			}).then(function (text) {
@@ -66,13 +61,12 @@ var AuctionSniperDriver = (function () {
 var ApplicationRunner = (function () {
 	function ApplicationRunner() {
 		_classCallCheck(this, ApplicationRunner);
-
-		this.driver = new AuctionSniperDriver(1000);
 	}
 
 	_createClass(ApplicationRunner, [{
 		key: 'startBiddingIn',
 		value: function startBiddingIn(auction) {
+			this.driver = new AuctionSniperDriver(1000);
 			// start main program with some arguments
 			this.runningServer = childProcess.exec('node ./dist/src/main.js ' + auction, function (error, stdout) {
 				console.log(stdout);

@@ -20,14 +20,9 @@ var client;
 class AuctionSniperDriver{
 	// todo connect with browser to localhost http server, assert that html response shows expected status
 	constructor(){
-		client = webdriverio.remote(options);
-		this.first = true;
+		client = webdriverio.remote(options).init();
 	}
 	showsSniperStatus(statusText) {
-		if (this.first){
-			client = client.init();
-			this.first = false;
-		}
 		return client.url('localhost:8888')
 		.then( () => client.getText('#status'))
 		.then(text => {
@@ -42,9 +37,10 @@ class AuctionSniperDriver{
 
 class ApplicationRunner {
 	constructor() {
-		this.driver = new AuctionSniperDriver(1000);
+
 	}
 	startBiddingIn(auction) {
+		this.driver = new AuctionSniperDriver(1000);
 		// start main program with some arguments
 		this.runningServer = childProcess.exec('node ./dist/src/main.js ' + auction, (error,stdout) => {
 			console.log(stdout);
