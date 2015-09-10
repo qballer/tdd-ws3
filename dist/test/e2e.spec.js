@@ -162,7 +162,7 @@ describe('the auction sniper', function () {
 		application = new ApplicationRunner();
 	});
 
-	it('makes higher bid but loses', function () {
+	xit('makes higher bid but loses', function () {
 		return auction.startSellingItem().then(function () {
 			return application.startBiddingIn('item-5347');
 		}).then(function () {

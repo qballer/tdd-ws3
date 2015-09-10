@@ -108,7 +108,7 @@ describe('the auction sniper', () =>{
 		application = new ApplicationRunner();
 	});
 
-	it('makes higher bid but loses', () => {
+	xit('makes higher bid but loses', () => {
 		return auction.startSellingItem()
 			.then(() => application.startBiddingIn('item-5347'))
 			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))
