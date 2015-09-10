@@ -20,12 +20,12 @@ var client;
 class AuctionSniperDriver{
 	// todo connect with browser to localhost http server, assert that html response shows expected status
 	constructor(){
-		client = webdriverio.remote(options).init();
+		client = webdriverio.remote(options);
 		this.first = true;
 	}
 	showsSniperStatus(statusText) {
 		if (this.first){
-		//	client = client.init();
+			client = client.init();
 			this.first = false;
 		}
 		return client.url('localhost:8888')
@@ -43,11 +43,10 @@ class AuctionSniperDriver{
 class ApplicationRunner {
 	constructor() {
 		this.driver = new AuctionSniperDriver(1000);
-        this.driver.showsSniperStatus(statuses.STATUS_JOINING); 
 	}
 	startBiddingIn(auction) {
 		// start main program with some arguments
-		this.runningServer = childProcess.exec('node ./src/main.js ' + auction, (error,stdout) => {
+		this.runningServer = childProcess.exec('node ./dist/src/main.js ' + auction, (error,stdout) => {
 			console.log(stdout);
 			console.log(error);
 		});
@@ -80,7 +79,7 @@ class FakeAuctionServer {
 		});
 	}
 	announceClosed(){
-		return redis.createClient().publish(this.itemId, "done");
+		return redis.createClient().publish(this.itemId, "lost");
 	}
 	startSellingItem() {
 		return this.redisListener.subscribe(this.itemId);

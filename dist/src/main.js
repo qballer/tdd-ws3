@@ -1,6 +1,7 @@
 'use strict';
 
 var express = require('express');
+var sourcemaps = require("gulp-sourcemaps");
 var app = express();
 var server;
 var state = 'joining';
@@ -8,8 +9,14 @@ var redis = require('then-redis');
 var itemToSnipe = process.argv[2];
 
 function main() {
-	client = redis.createClient();
+	var client = redis.createClient();
 	client.publish(itemToSnipe, 'join');
+	var listener = redis.createClient();
+	listener.subscribe(itemToSnipe);
+
+	listener.on('message', function (channel, msg) {
+		state = msg;
+	});
 
 	app.get('/', function (req, res) {
 		res.send('<div id="status">' + state + '</div>');
