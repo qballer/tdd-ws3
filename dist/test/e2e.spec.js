@@ -105,17 +105,17 @@ var FakeAuctionServer = (function () {
 	}
 
 	_createClass(FakeAuctionServer, [{
-		key: 'hasRecievedJoinRequestFromSniper',
-		value: function hasRecievedJoinRequestFromSniper() {
+		key: 'hasReceivedJoinRequestFromSniper',
+		value: function hasReceivedJoinRequestFromSniper() {
 			assert(this.count > 0, 'did not receive a message');
-			return new Promise(function (res, rej) {
+			return new Promise(function (res) {
 				res();
 			});
 		}
 	}, {
 		key: 'announceClosed',
 		value: function announceClosed() {
-			return this.publisher.publish(this.itemId, "lost");
+			return this.publisher.publish(this.itemId, "closed");
 		}
 	}, {
 		key: 'startSellingItem',
@@ -141,11 +141,29 @@ describe('the auction sniper', function () {
 		application = new ApplicationRunner();
 	});
 
+	it('makes higher bid but loses', function () {
+		return auction.startSellingItem().then(function () {
+			return application.startBiddingIn('item-5347');
+		}).then(function () {
+			return auction.hasReceivedJoinRequestFromSniper();
+		}).then(function () {
+			return auction.reportPrice(1000, 98, 'other bidder');
+		}).then(function () {
+			return application.hasShownSniperIsBidding();
+		}).then(function () {
+			return auction.hasReceivedBid(1098, SNIPER_ID);
+		}).then(function () {
+			return auction.announceClosed();
+		}).then(function () {
+			return application.showsSniperHasLostAuction();
+		});
+	});
+
 	it('joins an auction untill it closes', function () {
 		return auction.startSellingItem().then(function () {
 			return application.startBiddingIn('item-5347');
 		}).then(function () {
-			return auction.hasRecievedJoinRequestFromSniper();
+			return auction.hasReceivedJoinRequestFromSniper();
 		}).then(function () {
 			return auction.announceClosed();
 		}).then(function () {

@@ -65,14 +65,14 @@ class FakeAuctionServer {
 				this.message = msg;
 		})
 	}
-	hasRecievedJoinRequestFromSniper(){
+	hasReceivedJoinRequestFromSniper(){
         assert(this.count > 0, 'did not receive a message');
-		return new Promise((res, rej) =>{
+		return new Promise((res) =>{
 			res();
 		});
 	}
 	announceClosed(){
-		return this.publisher.publish(this.itemId, "lost");
+		return this.publisher.publish(this.itemId, "closed");
 	}
 	startSellingItem() {
 		return this.listener.subscribe(this.itemId);
@@ -91,10 +91,23 @@ describe('the auction sniper', () =>{
 		application = new ApplicationRunner();
 	});
 
+	it('makes higher bid but loses', () => {
+		return auction.startSellingItem()
+			.then(() => application.startBiddingIn('item-5347'))
+			.then(() => auction.hasReceivedJoinRequestFromSniper())
+
+			.then(() => auction.reportPrice(1000, 98, 'other bidder'))
+			.then(() => application.hasShownSniperIsBidding())
+			.then(() => auction.hasReceivedBid(1098, SNIPER_ID))
+
+			.then(() => auction.announceClosed())
+			.then(() => application.showsSniperHasLostAuction());
+	});
+
 	it('joins an auction untill it closes', () => {
 		return auction.startSellingItem()
 			.then(() => application.startBiddingIn('item-5347'))
-			.then(() => auction.hasRecievedJoinRequestFromSniper())
+			.then(() => auction.hasReceivedJoinRequestFromSniper())
 			.then(() => auction.announceClosed())
 			.then(() => application.showsSniperHasLostAuction());
 	});	

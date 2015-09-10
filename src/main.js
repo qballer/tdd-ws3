@@ -13,7 +13,7 @@ function main(){
 	listener.subscribe(itemToSnipe);
 
 	listener.on('message', (channel, msg) => {
-		state = msg;
+		state = 'lost';
 	});
 	
 	app.get('/', function (req, res) {
