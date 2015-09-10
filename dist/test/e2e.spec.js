@@ -10,22 +10,22 @@ var _thenRedis = require('then-redis');
 
 var _thenRedis2 = _interopRequireDefault(_thenRedis);
 
-// import theRealThing from '../src/main';
-
 require('source-map-support').install();
 var Promise = require('bluebird');
 var assert = require('chai').assert;
+
 var childProcess = require('child_process');
 var SNIPER_ID = 'sniper';
 var REDIS_HOSTNAME = 'localhost';
 var STATUS = 'STATUS';
 
 var webdriverio = require('webdriverio');
-var options = { desiredCapabilities: { browserName: 'chrome' } };
+var options = { desiredCapabilities: { browserName: 'phantomjs' } };
 
 var statuses = {
 	STATUS_JOINING: 'joining',
-	STATUS_LOST: 'lost'
+	STATUS_LOST: 'lost',
+	STATUS_BIDDING: 'bidding'
 };
 var client;
 
@@ -46,7 +46,7 @@ var AuctionSniperDriver = (function () {
 				client = client.init();
 				this.first = false;
 			}
-			return client.url('localhost:8888').then(function () {
+			return client.url('http://localhost:8888').then(function () {
 				return client.getText('#status');
 			}).then(function (text) {
 				assert.equal(text, statusText, 'wrong status');
@@ -74,7 +74,7 @@ var ApplicationRunner = (function () {
 		key: 'startBiddingIn',
 		value: function startBiddingIn(auction) {
 			// start main program with some arguments
-			this.runningServer = childProcess.exec('node ./dist/src/main.js ' + auction, function (error, stdout) {
+			this.runningServer = childProcess.exec('node ./dist/src/main.js ' + SNIPER_ID + ' ' + auction, function (error, stdout) {
 				console.log(stdout);
 				console.log(error);
 			});
@@ -84,6 +84,11 @@ var ApplicationRunner = (function () {
 		key: 'showsSniperHasLostAuction',
 		value: function showsSniperHasLostAuction() {
 			return this.driver.showsSniperStatus(statuses.STATUS_LOST);
+		}
+	}, {
+		key: 'hasShownSniperIsBidding',
+		value: function hasShownSniperIsBidding() {
+			return this.driver.showsSniperStatus(statuses.STATUS_BIDDING);
 		}
 	}, {
 		key: 'stop',
@@ -105,6 +110,7 @@ var FakeAuctionServer = (function () {
 		this.count = 0;
 		this.itemId = itemId;
 		this.redisListener = _thenRedis2['default'].createClient();
+		this.redisPublisher = _thenRedis2['default'].createClient();
 		this.redisListener.on('message', function (channel, msg) {
 			_this.count += 1;
 			_this.message = msg;
@@ -115,6 +121,18 @@ var FakeAuctionServer = (function () {
 		key: 'hasRecievedJoinRequestFromSniper',
 		value: function hasRecievedJoinRequestFromSniper() {
 			assert(this.count > 0, 'did not receive a message');
+			assert.equal(this.message, 'join', 'message mismatch');
+			return new Promise(function (res, rej) {
+				res();
+			});
+		}
+	}, {
+		key: 'hasReceivedBid',
+		value: function hasReceivedBid(bid, sniperId) {
+			var parsedMessage = JSON.parse(this.message);
+			assert.equal(parsedMessage.event, 'bid', 'event mismatch');
+			assert.equal(parsedMessage.bidder, sniperId, 'bidder mismatch');
+			assert.equal(parsedMessage.price, bid, 'price mismatch');
 			return new Promise(function (res, rej) {
 				res();
 			});
@@ -122,12 +140,17 @@ var FakeAuctionServer = (function () {
 	}, {
 		key: 'announceClosed',
 		value: function announceClosed() {
-			return _thenRedis2['default'].createClient().publish(this.itemId, "lost");
+			return this.redisPublisher.publish(this.itemId, JSON.stringify({ event: "closed" }));
 		}
 	}, {
 		key: 'startSellingItem',
 		value: function startSellingItem() {
 			return this.redisListener.subscribe(this.itemId);
+		}
+	}, {
+		key: 'reportPrice',
+		value: function reportPrice(price, increment, bidder) {
+			return this.redisPublisher.publish(this.itemId, JSON.stringify({ event: 'price', price: price, increment: increment, bidder: bidder }));
 		}
 	}]);
 
@@ -137,7 +160,7 @@ var FakeAuctionServer = (function () {
 describe('the auction sniper', function () {
 	var auction;
 	var application;
-	beforeEach('auction sniper e2e', function () {
+	beforeEach('initialize auction server and application runner objects', function () {
 		auction = new FakeAuctionServer('item-5347');
 		application = new ApplicationRunner();
 	});
@@ -154,7 +177,25 @@ describe('the auction sniper', function () {
 		});
 	});
 
-	afterEach('something', function () {
+	it('sniper makes a higher bid but loses', function () {
+		return auction.startSellingItem().then(function () {
+			return application.startBiddingIn('item-5347');
+		}).then(function () {
+			return auction.hasRecievedJoinRequestFromSniper();
+		}).then(function () {
+			return auction.reportPrice(1000, 98, "other bidder");
+		}).then(function () {
+			return application.hasShownSniperIsBidding();
+		}).then(function () {
+			return auction.hasReceivedBid(1098, SNIPER_ID);
+		}).then(function () {
+			return auction.announceClosed();
+		}).then(function () {
+			return application.showsSniperHasLostAuction();
+		});
+	});
+
+	afterEach('stop application', function () {
 		application.stop();
 	});
 });

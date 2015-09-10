@@ -1,23 +1,44 @@
+require('source-map-support').install();
+
+var AuctionMessageTranslator = require('../src/AuctionMessageTranslator');
 var express = require('express');
-var sourcemaps = require("gulp-sourcemaps");
 var app = express();
 var server;
-var state = 'joining';
+var status = 'joining';
 var redis = require('then-redis')
-var itemToSnipe = process.argv[2];
+var itemToSnipe = process.argv[3];
+var sniperId = process.argv[2];
+
+const UNUSED_CHAT = null;
+
+var client = redis.createClient();
+
+class AuctionEventListener {
+	auctionClosed() {
+		status = 'lost';
+
+	}
+
+	currentPrice(price, increment) {
+		status = 'bidding';
+		//if (sniperId !== parsed.bidder){
+		client.publish(itemToSnipe, JSON.stringify({event:'bid', price:(price + increment), bidder:sniperId}));
+		//}
+	}
+}
 
 function main(){
-	var client = redis.createClient();
 	client.publish(itemToSnipe, 'join');
-	var listener = redis.createClient();
-	listener.subscribe(itemToSnipe);
-
-	listener.on('message', (channel, msg) => {
-		state = msg;
+	var subscriber = redis.createClient();
+	var listener = new AuctionEventListener();
+	var auctionMessageTranslator = new AuctionMessageTranslator(listener);
+	subscriber.subscribe(itemToSnipe);
+	subscriber.on('message', (channel, msg) => {
+		auctionMessageTranslator.processMessage(UNUSED_CHAT, msg);
 	});
 	
 	app.get('/', function (req, res) {
-		res.send('<div id="status">' + state + '</div>');
+		res.send(`<html><body><div id="status">${status}</div></body></html>`);
 	});
 	server = app.listen(8888, function () {
 		var host = server.address().address;
