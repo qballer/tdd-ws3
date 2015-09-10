@@ -4,6 +4,7 @@ var express = require('express');
 var sourcemaps = require("gulp-sourcemaps");
 var app = express();
 var AuctionMessageTranslator = require('./AuctionMessageTranslator');
+var AuctionSniper = require('./AuctionSniper');
 var server;
 var state = 'joining';
 var redis = require('then-redis');
@@ -11,23 +12,27 @@ var itemToSnipe = process.argv[2];
 var SNIPER_ID = 'sniper';
 
 function main() {
-	function joinAuction(sniperId) {
-		client.publish(itemToSnipe, JSON.stringify({ bidder: sniperId, type: 'join' }));
-	}
+	var publisher = redis.createClient();
+	publisher.publish(itemToSnipe, JSON.stringify({ bidder: SNIPER_ID, type: 'join' }));
+	var subscriber = redis.createClient();
+	subscriber.subscribe(itemToSnipe);
 
-	var auctionHandler = {
-		auctionClosed: function auctionClosed() {
-			state = 'lost';
+	var auction = {
+		bid: function bid(price) {
+			publisher.publish(itemToSnipe, JSON.stringify({ bidder: SNIPER_ID, type: 'bid', price: price }));
 		}
 	};
 
-	var client = redis.createClient();
-	joinAuction(SNIPER_ID);
-	var listener = redis.createClient();
-	listener.subscribe(itemToSnipe);
-
-	var translator = new AuctionMessageTranslator(auctionHandler);
-	listener.on('message', translator.processMessage.bind(translator));
+	var sniper = new AuctionSniper(auction, {
+		sniperLost: function sniperLost() {
+			state = 'lost';
+		},
+		sniperBidding: function sniperBidding() {
+			state = 'bidding';
+		}
+	});
+	var translator = new AuctionMessageTranslator(sniper);
+	subscriber.on('message', translator.processMessage);
 
 	app.get('/', function (req, res) {
 		res.send('<html><head></head><body>\n\t\t<div id="status">' + state + '</div>\n\t\t</body></html>');

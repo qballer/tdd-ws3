@@ -37,7 +37,7 @@ class AuctionSniperDriver{
 
 class ApplicationRunner {
 	startBiddingIn(auction) {
-		this.driver = new AuctionSniperDriver(1000);
+		this.driver = new AuctionSniperDriver();
 		// start main program with some arguments
 		this.runningServer = childProcess.exec('node ./dist/src/main.js ' + auction, (error,stdout) => {
 			console.log(stdout);
@@ -100,7 +100,7 @@ class FakeAuctionServer {
 	}
 }
 
-describe('the auction sniper', () =>{
+describe('E2E: auction sniper', () =>{
 	var auction;
 	var application;
 	beforeEach('auction sniper e2e',() => {
@@ -108,7 +108,7 @@ describe('the auction sniper', () =>{
 		application = new ApplicationRunner();
 	});
 
-	xit('makes higher bid but loses', () => {
+	it('makes higher bid but loses', () => {
 		return auction.startSellingItem()
 			.then(() => application.startBiddingIn('item-5347'))
 			.then(() => auction.hasReceivedJoinRequestFrom(SNIPER_ID))

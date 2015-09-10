@@ -65,7 +65,7 @@ var ApplicationRunner = (function () {
 	_createClass(ApplicationRunner, [{
 		key: 'startBiddingIn',
 		value: function startBiddingIn(auction) {
-			this.driver = new AuctionSniperDriver(1000);
+			this.driver = new AuctionSniperDriver();
 			// start main program with some arguments
 			this.runningServer = childProcess.exec('node ./dist/src/main.js ' + auction, function (error, stdout) {
 				console.log(stdout);
@@ -154,7 +154,7 @@ var FakeAuctionServer = (function () {
 	return FakeAuctionServer;
 })();
 
-describe('the auction sniper', function () {
+describe('E2E: auction sniper', function () {
 	var auction;
 	var application;
 	beforeEach('auction sniper e2e', function () {
@@ -162,7 +162,7 @@ describe('the auction sniper', function () {
 		application = new ApplicationRunner();
 	});
 
-	xit('makes higher bid but loses', function () {
+	it('makes higher bid but loses', function () {
 		return auction.startSellingItem().then(function () {
 			return application.startBiddingIn('item-5347');
 		}).then(function () {
