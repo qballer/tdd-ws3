@@ -7,6 +7,17 @@ export default class AuctionMessageTranslator{
 	}
 
 	processMessage(channel, message){
-		this.listener.auctionClosed();
+		const parsedMessage = JSON.parse(message);
+		console.log('parsedMessage', parsedMessage);
+		switch (parsedMessage.event) {
+			case 'closed':
+				this.listener.auctionClosed();
+				break;
+			case 'price':
+				this.listener.currentPrice(parsedMessage.price, parsedMessage.increment, parsedMessage.bidder);
+				break;
+			default:
+				throw new Error('wtf ' + parsedMessage.event);
+		}
 	}
 }

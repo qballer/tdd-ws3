@@ -131,12 +131,12 @@ var FakeAuctionServer = (function () {
 	}, {
 		key: 'reportPrice',
 		value: function reportPrice(price, increment, bidder) {
-			return this.publisher.publish(this.itemId, JSON.stringify({ price: price, increment: increment, bidder: bidder, type: "price" }));
+			return this.publisher.publish(this.itemId, JSON.stringify({ price: price, increment: increment, bidder: bidder, event: "price" }));
 		}
 	}, {
 		key: 'announceClosed',
 		value: function announceClosed() {
-			return this.publisher.publish(this.itemId, "closed");
+			return this.publisher.publish(this.itemId, JSON.stringify({ event: "closed" }));
 		}
 	}, {
 		key: 'startSellingItem',

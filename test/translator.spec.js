@@ -15,15 +15,15 @@ describe('auction message translator', () => {
 		translator = new AuctionMessageTranslator(mockListener);
 	});
 	it('notifies auction closed when close message received', () => {
-		const message = JSON.stringify({event:'close'});
+		const message = JSON.stringify({event:'closed'});
 		translator.processMessage(UNUSED_CHANNEL, message);
 		assert(mockListener.auctionClosed.calledOnce, 'listener auctionClosed not called once');
 	});
 
 	it('notifies bid details when current price message received', () => {
-		const message = JSON.stringify({event:'price', currentPrice: 192, increment: 7, bidder: 'someone else'});
+		const message = JSON.stringify({event:'price', price: 192, increment: 7, bidder: 'someone else'});
 		translator.processMessage(UNUSED_CHANNEL, message);
 		assert(mockListener.currentPrice.calledOnce, 'listener currentPrice not called once');
-		assert(mockListener.currentPrice.calledWithExactly('price', 192, 7, 'someone else'), 'listener currentPrice was not called with correct parameters');
+		assert(mockListener.currentPrice.calledWithExactly(192, 7, 'someone else'), 'listener currentPrice was not called with correct parameters');
 	});
 });

@@ -86,10 +86,10 @@ class FakeAuctionServer {
 	}
 
 	reportPrice(price, increment, bidder){
-		return this.publisher.publish(this.itemId, JSON.stringify({price, increment, bidder, type: "price"}));
+		return this.publisher.publish(this.itemId, JSON.stringify({price, increment, bidder, event: "price"}));
 	}
 	announceClosed(){
-		return this.publisher.publish(this.itemId, "closed");
+		return this.publisher.publish(this.itemId, JSON.stringify({event: "closed"}));
 	}
 	startSellingItem() {
 		return this.listener.subscribe(this.itemId);
