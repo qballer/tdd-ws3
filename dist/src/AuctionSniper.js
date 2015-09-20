@@ -25,15 +25,25 @@ var AuctionSniper = (function () {
 		}
 	}, {
 		key: "currentPrice",
-		value: function currentPrice(price, increment) {
-			this.auction.bid(price + increment);
-			this.sniperListener.sniperBidding();
+		value: function currentPrice(price, increment, fromSniper) {
+			if (!fromSniper) {
+				this.auction.bid(price + increment);
+				this.sniperListener.sniperBidding();
+			}
 		}
 	}]);
 
 	return AuctionSniper;
 })();
 
-exports["default"] = AuctionSniper;
+var PriceSource = {
+	fromSniper: 0,
+	fromOtherBidder: 1
+};
+
+exports["default"] = {
+	AuctionSniper: AuctionSniper,
+	PriceSource: PriceSource
+};
 module.exports = exports["default"];
 //# sourceMappingURL=AuctionSniper.js.map

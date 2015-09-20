@@ -8,11 +8,14 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
+var PriceSource = require('../src/AuctionSniper').PriceSource;
+
 var AuctionMessageTranslator = (function () {
-	function AuctionMessageTranslator(listener) {
+	function AuctionMessageTranslator(sniperId, listener) {
 		_classCallCheck(this, AuctionMessageTranslator);
 
 		this.listener = listener;
+		this.sniperId = sniperId;
 	}
 
 	_createClass(AuctionMessageTranslator, [{
@@ -24,7 +27,7 @@ var AuctionMessageTranslator = (function () {
 					this.listener.auctionClosed();
 					break;
 				case 'price':
-					this.listener.currentPrice(parsed.price, parsed.increment);
+					this.listener.currentPrice(parsed.price, parsed.increment, parsed.bidder == this.sniperId ? PriceSource.fromSniper : PriceSource.fromOtherBidder);
 					break;
 			}
 		}

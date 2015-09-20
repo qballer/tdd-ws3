@@ -194,6 +194,28 @@ describe('the auction sniper', function () {
 		});
 	});
 
+	it('sniper wins an auction by bidding higher', function () {
+		return auction.startSellingItem().then(function () {
+			return application.startBiddingIn('item-5347');
+		}).then(function () {
+			return auction.hasRecievedJoinRequestFromSniper();
+		}).then(function () {
+			return auction.reportPrice(1000, 98, "other bidder");
+		}).then(function () {
+			return application.hasShownSniperIsBidding();
+		}).then(function () {
+			return auction.hasReceivedBid(1098, SNIPER_ID);
+		}).then(function () {
+			return auction.reportPrice(1098, 97, SNIPER_ID);
+		}).then(function () {
+			return application.hasShownSniperIsWinning();
+		}).then(function () {
+			return auction.announceClosed();
+		}).then(function () {
+			return application.showsSniperHasWonAuction();
+		});
+	});
+
 	afterEach('stop application', function () {
 		application.stop();
 	});

@@ -1,6 +1,9 @@
+var PriceSource = require('../src/AuctionSniper').PriceSource;
+
 export default class AuctionMessageTranslator {
-	constructor(listener) {
+	constructor(sniperId, listener) {
 		this.listener = listener;
+		this.sniperId = sniperId;
 	}
 
 	processMessage(chat, message) {
@@ -10,7 +13,8 @@ export default class AuctionMessageTranslator {
 				this.listener.auctionClosed();
 				break;
 			case 'price' : 
-				this.listener.currentPrice(parsed.price, parsed.increment);
+				this.listener.currentPrice(parsed.price, parsed.increment, 
+										  (parsed.bidder == this.sniperId ? PriceSource.fromSniper : PriceSource.fromOtherBidder));
 				break;
 		}
 	}

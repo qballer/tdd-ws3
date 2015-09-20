@@ -138,6 +138,24 @@ describe('the auction sniper', () =>{
 			.then(() => application.showsSniperHasLostAuction());
 	});
 
+
+	it('sniper wins an auction by bidding higher', () => {
+		return auction.startSellingItem()
+			.then(() => application.startBiddingIn('item-5347'))
+			.then(() => auction.hasRecievedJoinRequestFromSniper())
+
+			.then(() => auction.reportPrice(1000, 98, "other bidder"))
+			.then(() => application.hasShownSniperIsBidding())
+
+			.then(() => auction.hasReceivedBid(1098, SNIPER_ID))
+
+			.then(() => auction.reportPrice(1098, 97, SNIPER_ID))
+			.then(() => application.hasShownSniperIsWinning())
+
+			.then(() => auction.announceClosed())
+			.then(() => application.showsSniperHasWonAuction());
+	});
+
 	afterEach('stop application', () => {
 		application.stop();
 	});

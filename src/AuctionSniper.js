@@ -1,5 +1,5 @@
-export default class AuctionSniper { /* implements AuctionEventListener */
-constructor(auction, sniperListener){
+class AuctionSniper { /* implements AuctionEventListener */
+	constructor(auction, sniperListener){
 		this.auction = auction;
 		this.sniperListener = sniperListener;
 	}
@@ -7,8 +7,20 @@ constructor(auction, sniperListener){
 		this.sniperListener.sniperLost();
 	}
 
-	currentPrice(price, increment) {
-		this.auction.bid(price + increment);
-		this.sniperListener.sniperBidding();
+	currentPrice(price, increment, fromSniper) {
+		if (!fromSniper) {
+			this.auction.bid(price + increment);
+			this.sniperListener.sniperBidding();
+		}
 	}
+}
+
+var PriceSource = {
+	fromSniper:0,
+	fromOtherBidder:1
+};
+
+export default {
+	AuctionSniper, 
+	PriceSource
 }

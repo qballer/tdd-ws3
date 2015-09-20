@@ -1,7 +1,7 @@
 require('source-map-support').install();
 var sinon = require('sinon');
 var assert = require('chai').assert;
-var AuctionSniper = require('../src/AuctionSniper');
+var AuctionSniper = require('../src/AuctionSniper').AuctionSniper;
 var Auction = require('../src/Auction');
 
 describe('auction sniper test', () =>{

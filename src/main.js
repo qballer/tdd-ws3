@@ -1,7 +1,7 @@
 require('source-map-support').install();
 
 var AuctionMessageTranslator = require('../src/AuctionMessageTranslator');
-var AuctionSniper = require('../src/AuctionSniper');
+import AuctionSniper from '../src/AuctionSniper';
 var Auction = require('../src/Auction');
 var express = require('express');
 var app = express();
@@ -33,7 +33,7 @@ class SniperStateDisplayer{ /* implements SniperListener*/
 function main(){
 	var subscriber = redis.createClient();
 	var auction = new Auction(itemToSnipe, sniperId, client);
-	var auctionMessageTranslator = new AuctionMessageTranslator(new AuctionSniper(auction, new SniperStateDisplayer()));
+	var auctionMessageTranslator = new AuctionMessageTranslator(sniperId, new AuctionSniper(auction, new SniperStateDisplayer()));
 	auction.join();
 	subscriber.subscribe(itemToSnipe);
 	
