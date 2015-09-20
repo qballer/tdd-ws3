@@ -1,4 +1,4 @@
-var PriceSource = require('../src/AuctionSniper').PriceSource;
+import {AuctionSniper, PriceSource} from './AuctionSniper';
 
 export default class AuctionMessageTranslator {
 	constructor(sniperId, listener) {

@@ -15,12 +15,9 @@ class AuctionSniper { /* implements AuctionEventListener */
 	}
 }
 
-var PriceSource = {
-	fromSniper:0,
-	fromOtherBidder:1
+const PriceSource = {
+	fromSniper : 0,
+	fromOtherBidder : 1
 };
 
-export default {
-	AuctionSniper, 
-	PriceSource
-}
+export { AuctionSniper, PriceSource }

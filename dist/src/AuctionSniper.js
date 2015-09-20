@@ -41,9 +41,6 @@ var PriceSource = {
 	fromOtherBidder: 1
 };
 
-exports["default"] = {
-	AuctionSniper: AuctionSniper,
-	PriceSource: PriceSource
-};
-module.exports = exports["default"];
+exports.AuctionSniper = AuctionSniper;
+exports.PriceSource = PriceSource;
 //# sourceMappingURL=AuctionSniper.js.map

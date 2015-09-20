@@ -1,9 +1,11 @@
 'use strict';
 
+var _srcAuctionSniper = require('../src/AuctionSniper');
+
 require('source-map-support').install();
 var sinon = require('sinon');
 var assert = require('chai').assert;
-var AuctionSniper = require('../src/AuctionSniper').AuctionSniper;
+
 var Auction = require('../src/Auction');
 
 describe('auction sniper test', function () {
@@ -18,7 +20,7 @@ describe('auction sniper test', function () {
 		auction = {
 			bid: sinon.spy()
 		};
-		sniper = new AuctionSniper(auction, sniperListener);
+		sniper = new _srcAuctionSniper.AuctionSniper(auction, sniperListener);
 	});
 
 	it('reports lost when auction closes', function () {

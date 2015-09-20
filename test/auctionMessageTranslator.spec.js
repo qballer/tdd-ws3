@@ -1,6 +1,6 @@
 require('source-map-support').install();
 var AuctionMessageTranslator = require('../src/AuctionMessageTranslator');
-var PriceSource = require('../src/AuctionSniper').PriceSource;
+import {AuctionSniper, PriceSource} from '../src/AuctionSniper';
 var sinon = require('sinon');
 var assert = require('chai').assert;
 
