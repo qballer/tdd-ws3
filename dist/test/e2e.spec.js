@@ -50,7 +50,6 @@ var AuctionSniperDriver = (function () {
 				return client.getText('#status');
 			}).then(function (text) {
 				assert.equal(text, statusText, 'wrong status');
-				console.log('Assert Passed!!');
 			});
 		}
 	}, {

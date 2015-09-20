@@ -1,6 +1,8 @@
 require('source-map-support').install();
 
 var AuctionMessageTranslator = require('../src/AuctionMessageTranslator');
+var AuctionSniper = require('../src/AuctionSniper');
+var Auction = require('../src/Auction');
 var express = require('express');
 var app = express();
 var server;
@@ -13,33 +15,26 @@ const UNUSED_CHAT = null;
 
 var client = redis.createClient();
 
-class SniperListener{
+class SniperStateDisplayer{ /* implements SniperListener*/
+	showStatus(show_status) {
+		status = show_status;
+	}
 	sniperLost(){
-		status = 'lost';
+		this.showStatus('lost');
 	}
-}
-
-class AuctionEventListener {
-	constructor(sniperListener){
-		this.sniperListener = sniperListener;
+	sniperBidding(){
+		this.showStatus('bidding');
 	}
-	auctionClosed() {
-		this.sniperListener.sniperLost();
-	}
-
-	currentPrice(price, increment) {
-		status = 'bidding';
-		//if (sniperId !== parsed.bidder){
-		client.publish(itemToSnipe, JSON.stringify({event:'bid', price:(price + increment), bidder:sniperId}));
-		//}
+	sniperWinning(){
+		this.showStatus('winning');
 	}
 }
 
 function main(){
-	client.publish(itemToSnipe, 'join');
 	var subscriber = redis.createClient();
-	var listener = new AuctionEventListener(new SniperListener());
-	var auctionMessageTranslator = new AuctionMessageTranslator(listener);
+	var auction = new Auction(itemToSnipe, sniperId, client);
+	var auctionMessageTranslator = new AuctionMessageTranslator(new AuctionSniper(auction, new SniperStateDisplayer()));
+	auction.join();
 	subscriber.subscribe(itemToSnipe);
 	
 	subscriber.on('message', (channel, msg) => {

@@ -16,6 +16,7 @@ var statuses = {
 	STATUS_BIDDING: 'bidding'
 }
 var client;
+
 class AuctionSniperDriver{
 	// todo connect with browser to localhost http server, assert that html response shows expected status
 	constructor(){
@@ -28,11 +29,10 @@ class AuctionSniperDriver{
 			this.first = false;
 		}
 		return client.url('http://localhost:8888')
-		.then( () => client.getText('#status'))
-		.then(text => {
-			assert.equal(text, statusText, 'wrong status');
-			console.log('Assert Passed!!');
-		});
+				.then( () => client.getText('#status'))
+				.then(text => {
+					assert.equal(text, statusText, 'wrong status');
+				});
 	}
 	stop(){
 		client.end();
