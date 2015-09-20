@@ -13,10 +13,18 @@ const UNUSED_CHAT = null;
 
 var client = redis.createClient();
 
-class AuctionEventListener {
-	auctionClosed() {
+class SniperListener{
+	sniperLost(){
 		status = 'lost';
+	}
+}
 
+class AuctionEventListener {
+	constructor(sniperListener){
+		this.sniperListener = sniperListener;
+	}
+	auctionClosed() {
+		this.sniperListener.sniperLost();
 	}
 
 	currentPrice(price, increment) {
@@ -30,9 +38,10 @@ class AuctionEventListener {
 function main(){
 	client.publish(itemToSnipe, 'join');
 	var subscriber = redis.createClient();
-	var listener = new AuctionEventListener();
+	var listener = new AuctionEventListener(new SniperListener());
 	var auctionMessageTranslator = new AuctionMessageTranslator(listener);
 	subscriber.subscribe(itemToSnipe);
+	
 	subscriber.on('message', (channel, msg) => {
 		auctionMessageTranslator.processMessage(UNUSED_CHAT, msg);
 	});

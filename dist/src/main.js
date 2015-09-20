@@ -19,15 +19,32 @@ var UNUSED_CHAT = null;
 
 var client = redis.createClient();
 
+var SniperListener = (function () {
+	function SniperListener() {
+		_classCallCheck(this, SniperListener);
+	}
+
+	_createClass(SniperListener, [{
+		key: 'sniperLost',
+		value: function sniperLost() {
+			status = 'lost';
+		}
+	}]);
+
+	return SniperListener;
+})();
+
 var AuctionEventListener = (function () {
-	function AuctionEventListener() {
+	function AuctionEventListener(sniperListener) {
 		_classCallCheck(this, AuctionEventListener);
+
+		this.sniperListener = sniperListener;
 	}
 
 	_createClass(AuctionEventListener, [{
 		key: 'auctionClosed',
 		value: function auctionClosed() {
-			status = 'lost';
+			this.sniperListener.sniperLost();
 		}
 	}, {
 		key: 'currentPrice',
@@ -45,9 +62,10 @@ var AuctionEventListener = (function () {
 function main() {
 	client.publish(itemToSnipe, 'join');
 	var subscriber = redis.createClient();
-	var listener = new AuctionEventListener();
+	var listener = new AuctionEventListener(new SniperListener());
 	var auctionMessageTranslator = new AuctionMessageTranslator(listener);
 	subscriber.subscribe(itemToSnipe);
+
 	subscriber.on('message', function (channel, msg) {
 		auctionMessageTranslator.processMessage(UNUSED_CHAT, msg);
 	});
