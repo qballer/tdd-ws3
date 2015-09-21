@@ -22,6 +22,9 @@ class SniperStateDisplayer{ /* implements SniperListener*/
 	sniperLost(){
 		this.showStatus('lost');
 	}
+	sniperWon(){
+		this.showStatus('won');
+	}
 	sniperBidding(){
 		this.showStatus('bidding');
 	}

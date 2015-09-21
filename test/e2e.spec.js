@@ -46,8 +46,8 @@ class ApplicationRunner {
 	startBiddingIn(auction) {
 		// start main program with some arguments
 		this.runningServer = childProcess.exec('node ./dist/src/main.js ' +  SNIPER_ID + ' ' + auction , (error,stdout) => {
-			console.log(stdout);
-			console.log(error);
+			//console.log(stdout);
+			//console.log(error);
 		});
 		return this.driver.showsSniperStatus(statuses.STATUS_JOINING); 
 	}

@@ -16,17 +16,25 @@ var AuctionSniper = (function () {
 
 		this.auction = auction;
 		this.sniperListener = sniperListener;
+		this.isWinning = false;
 	}
 
 	_createClass(AuctionSniper, [{
 		key: "auctionClosed",
 		value: function auctionClosed() {
-			this.sniperListener.sniperLost();
+			if (this.isWinning) {
+				this.sniperListener.sniperWon();
+			} else {
+				this.sniperListener.sniperLost();
+			}
 		}
 	}, {
 		key: "currentPrice",
-		value: function currentPrice(price, increment, fromSniper) {
-			if (!fromSniper) {
+		value: function currentPrice(price, increment, priceSource) {
+			this.isWinning = priceSource == PriceSource.fromSniper;
+			if (this.isWinning) {
+				this.sniperListener.sniperWinning();
+			} else {
 				this.auction.bid(price + increment);
 				this.sniperListener.sniperBidding();
 			}

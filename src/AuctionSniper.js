@@ -2,13 +2,21 @@ class AuctionSniper { /* implements AuctionEventListener */
 	constructor(auction, sniperListener){
 		this.auction = auction;
 		this.sniperListener = sniperListener;
+		this.isWinning = false;
 	}
 	auctionClosed() {
-		this.sniperListener.sniperLost();
+		if (this.isWinning) {
+			this.sniperListener.sniperWon();
+		} else {
+			this.sniperListener.sniperLost();
+		}
 	}
 
-	currentPrice(price, increment, fromSniper) {
-		if (!fromSniper) {
+	currentPrice(price, increment, priceSource) {
+		this.isWinning = (priceSource == PriceSource.fromSniper);
+		if (this.isWinning) {
+			this.sniperListener.sniperWinning();
+		} else {
 			this.auction.bid(price + increment);
 			this.sniperListener.sniperBidding();
 		}

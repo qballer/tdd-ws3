@@ -40,6 +40,11 @@ var SniperStateDisplayer = (function () {
 			this.showStatus('lost');
 		}
 	}, {
+		key: 'sniperWon',
+		value: function sniperWon() {
+			this.showStatus('won');
+		}
+	}, {
 		key: 'sniperBidding',
 		value: function sniperBidding() {
 			this.showStatus('bidding');
